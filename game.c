@@ -4,7 +4,9 @@
 #include "navswitch.h"
 #include "led.h"
 #include "../fonts/font3x5_1.h"
+#include "tron.h"
 
+//tinygl_pixel_value_t
 
 enum {DISPLAY_UPDATE_RATE = 500};
 enum {FLASHER_UPDATE_RATE = 500};
@@ -15,8 +17,8 @@ typedef enum {STATE_DUMMY, STATE_INIT, STATE_START,
               STATE_PLAYING, STATE_OVER,
               STATE_READY} state_t;
 
-static state_t state = STATE_INIT;
-static uint8_t display[TINYGL_WIDTH * TINYGL_HEIGHT];
+static state_t state = STATE_PLAYING;
+static uint8_t display[TINYGL_WIDTH][TINYGL_HEIGHT] = {{0}};
 
 
 static void game_init(void)
@@ -32,10 +34,16 @@ static void game_init(void)
     navswitch_init ();
 
     // game init
+    direction_t d = UP;
+    position_t p;
+    p.x = 2;
+    p.y = 0;
+    tron_init(display, d, p);
 }
 
 static void display_task(void *data)
 {
+    int i, j;
     if (state == STATE_PLAYING) {
         /* Update display.  */
         for (j = 0; j < TINYGL_HEIGHT; j++)
@@ -53,6 +61,38 @@ static void navswitch_task(void *data)
 {
     navswitch_update ();
 
+    if (navswitch_push_event_p (NAVSWITCH_NORTH))
+    {
+        switch (state)
+        {
+        case STATE_READY:
+            break;
+
+        case STATE_PLAYING:
+            tron_set_lightbike_dir(UP);
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    if (navswitch_push_event_p (NAVSWITCH_SOUTH))
+    {
+        switch (state)
+        {
+        case STATE_READY:
+            break;
+
+        case STATE_PLAYING:
+            tron_set_lightbike_dir(DOWN);
+            break;
+
+        default:
+            break;
+        }
+    }
+
     if (navswitch_push_event_p (NAVSWITCH_EAST))
     {
         switch (state)
@@ -61,6 +101,7 @@ static void navswitch_task(void *data)
             break;
 
         case STATE_PLAYING:
+            tron_set_lightbike_dir(RIGHT);
             break;
 
         default:
@@ -76,6 +117,7 @@ static void navswitch_task(void *data)
             break;
 
         case STATE_PLAYING:
+            tron_set_lightbike_dir(LEFT);
             break;
 
         default:
@@ -83,20 +125,6 @@ static void navswitch_task(void *data)
         }
     }
 
-    if (navswitch_push_event_p (NAVSWITCH_WEST))
-    {
-        switch (state)
-        {
-        case STATE_READY:
-            break;
-
-        case STATE_PLAYING:
-            break;
-
-        default:
-            break;
-        }
-    }
 
     if (navswitch_push_event_p (NAVSWITCH_PUSH))
     {
@@ -120,6 +148,8 @@ static void game_task(void *data)
     switch (state)
     {
     case STATE_PLAYING:
+        tron_update();
+    /*
         if (! spacey_update ())
         {
             game_over_display (message);
@@ -127,6 +157,7 @@ static void game_task(void *data)
             led_set (LED1, 1);
             state = STATE_OVER;
         }
+        */
         break;
 
     case STATE_INIT:
@@ -137,9 +168,6 @@ static void game_task(void *data)
     case STATE_READY:
 
     case STATE_START:
-        /* Turn that bloody blimey space invader off...  */
-        game_start (&game_data);
-        led_set (LED1, 0);
         state = STATE_PLAYING;
         break;
     }
