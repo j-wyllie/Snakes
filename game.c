@@ -17,8 +17,14 @@ typedef enum {STATE_DUMMY, STATE_INIT, STATE_START,
               STATE_PLAYING, STATE_OVER,
               STATE_READY} state_t;
 
+
+static void game_init(void);
+static void display_task(void);
+static void navswitch_task(void);
+static void game_task(void);
+
 static state_t state = STATE_PLAYING;
-static uint8_t display[TINYGL_WIDTH][TINYGL_HEIGHT] = {{0}};
+static tinygl_pixel_value_t display[TINYGL_WIDTH][TINYGL_HEIGHT] = {{0}};
 
 
 static void game_init(void)
@@ -34,16 +40,43 @@ static void game_init(void)
     navswitch_init ();
 
     // game init
-    direction_t d = UP;
-    position_t p;
-    p.x = 2;
-    p.y = 0;
-    tron_init(display, d, p);
+    direction_t dir = UP;
+    position_t pos;
+    pos.x = 2;
+    pos.y = 0;
+    tron_init(dir, pos, 4);
 }
 
-static void display_task(void *data)
+static void display_set_pix(position_t pos, uint8_t value)
+{
+    display[pos.x][6 - pos.y] = value;
+}
+
+static void display_wipe()
 {
     int i, j;
+    for (i = 0; i < TINYGL_WIDTH; i++) {
+        for (j = 0; j < TINYGL_HEIGHT; j++) {
+            display[i][j] = 0;
+        }
+    }
+}
+
+static void display_task()
+{
+    // clear the screen
+    display_wipe();
+    tinygl_clear();
+
+    // draw lightbike
+    tron_lightbike_t lightbike = tron_get_lightbike();
+    int i = 0;
+    while (lightbike.snake[i].value != 111) {
+        display_set_pix(lightbike.snake[i].pos, lightbike.snake[i].value);
+        i++;
+    }
+
+    int j;
     if (state == STATE_PLAYING) {
         /* Update display.  */
         for (j = 0; j < TINYGL_HEIGHT; j++)
@@ -57,7 +90,7 @@ static void display_task(void *data)
     tinygl_update ();
 }
 
-static void navswitch_task(void *data)
+static void navswitch_task()
 {
     navswitch_update ();
 
@@ -143,7 +176,7 @@ static void navswitch_task(void *data)
     }
 }
 
-static void game_task(void *data)
+static void game_task()
 {
     switch (state)
     {
@@ -173,7 +206,7 @@ static void game_task(void *data)
     }
 }
 
-int main (void)
+int main(void)
 {
     game_init();
 
