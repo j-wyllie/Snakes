@@ -1,5 +1,7 @@
 #include "tron.h"
 
+/* HIHI */
+
 #define LIGHTBIKE_INC 1
 #define LIGHTBIKE_MOVE_PERIOD 150
 
