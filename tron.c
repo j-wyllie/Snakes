@@ -1,30 +1,30 @@
 #include "tron.h"
 
-/* HIHI */
+
 
 #define LIGHTBIKE_INC 1
-#define LIGHTBIKE_MOVE_PERIOD 150
+#define LIGHTBIKE_MOVE_PERIOD 100
 
-static tron_lightbike_t lightbike;
+
 static tron_timer timer;
 
-void tron_init(direction_t dir, position_t pos, uint8_t snake_length)
+void tron_init(tron_lightbike_t player, direction_t dir, position_t pos, uint8_t snake_length)
 {
-    lightbike.direction = dir;
-    lightbike.position = pos;
+    player.direction = dir;
+    player.position = pos;
 
-    lightbike.snake[0].pos = pos;
-    lightbike.snake[0].value = 1;
+    player.snake[0].pos = pos;
+    player.snake[0].value = 1;
     int i;
     for (i = 1; i < 8; i++) {
         if (i < snake_length) {
-            lightbike.snake[i].pos.x = 111;
-            lightbike.snake[i].pos.y = 111;
-            lightbike.snake[i].value = 1;
+            player.snake[i].pos.x = 111;
+            player.snake[i].pos.y = 111;
+            player.snake[i].value = 1;
         } else {
-            lightbike.snake[i].pos.x = 111;
-            lightbike.snake[i].pos.y = 111;
-            lightbike.snake[i].value = 111;
+            player.snake[i].pos.x = 111;
+            player.snake[i].pos.y = 111;
+            player.snake[i].value = 111;
         }
     }
 
@@ -32,47 +32,46 @@ void tron_init(direction_t dir, position_t pos, uint8_t snake_length)
     timer.move_period = LIGHTBIKE_MOVE_PERIOD;
 }
 
-void tron_set_lightbike_dir(direction_t d)
+
+
+void tron_set_lightbike_dir(tron_lightbike_t player, direction_t d)
 {
-        lightbike.direction = d;
+        player.direction = d;
 }
 
-tron_lightbike_t tron_get_lightbike()
-{
-    return lightbike;
-}
 
-void tron_move_lightbike()
+
+void tron_move_lightbike(tron_lightbike_t player)
 {
     // update head position
-    switch (lightbike.direction)
+    switch (player.direction)
     {
         case UP:
-            lightbike.position.y += LIGHTBIKE_INC;
+            player.position.y += LIGHTBIKE_INC;
             break;
         case DOWN:
-            lightbike.position.y -= LIGHTBIKE_INC;
+            player.position.y -= LIGHTBIKE_INC;
             break;
         case LEFT:
-            lightbike.position.x -= LIGHTBIKE_INC;
+            player.position.x -= LIGHTBIKE_INC;
             break;
         case RIGHT:
-            lightbike.position.x += LIGHTBIKE_INC;
+            player.position.x += LIGHTBIKE_INC;
             break;
     }
 
     // update snake positions
-    position_t temp = lightbike.snake[0].pos;
-    lightbike.snake[0].pos = lightbike.position;
+    position_t temp = player.snake[0].pos;
+    player.snake[0].pos = player.position;
 
-    position_t temp1 = lightbike.snake[1].pos;
-    lightbike.snake[1].pos = temp;
+    position_t temp1 = player.snake[1].pos;
+    player.snake[1].pos = temp;
 
-    temp = lightbike.snake[2].pos;
-    lightbike.snake[2].pos = temp1;
+    temp = player.snake[2].pos;
+    player.snake[2].pos = temp1;
 
-    temp1 = lightbike.snake[3].pos;
-    lightbike.snake[3].pos = temp;
+    temp1 = player.snake[3].pos;
+    player.snake[3].pos = temp;
 
     /*
     position_t temp1 = lightbike.position;
@@ -97,14 +96,12 @@ void tron_move_lightbike()
     */
 }
 
-uint8_t tron_update()
+uint8_t tron_update(tron_lightbike_t player)
 {
     timer.move_clock++;
-    if (timer.move_clock < timer.move_period) {
-        return 0;
-    } else {
+    if (timer.move_clock >= timer.move_period) {
         timer.move_clock = 0;
-        tron_move_lightbike();
+        tron_move_lightbike(player);
     }
     return 0;
 }
