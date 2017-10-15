@@ -36,14 +36,12 @@ typedef struct
     uint16_t move_clock;
 } tron_timer;
 
-void tron_init(direction_t, position_t, uint8_t);
+void tron_init(tron_lightbike_t*, direction_t, position_t, uint8_t);
 
-void tron_set_lightbike_dir(direction_t);
+void tron_set_lightbike_dir(tron_lightbike_t*, direction_t);
 
-tron_lightbike_t tron_get_lightbike(void);
+void tron_move_lightbike(tron_lightbike_t*);
 
-void tron_move_lightbike(void);
-
-uint8_t tron_update(void);
+uint8_t tron_update(tron_lightbike_t*);
 
 #endif
