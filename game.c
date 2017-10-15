@@ -77,15 +77,15 @@ static void game_init(void)
     // game init p1
     direction_t dir_p1 = UP;
     position_t pos_p1;
-    pos_p1.x = 1;
+    pos_p1.x = 2;
     pos_p1.y = 0;
     tron_init(&player_1, dir_p1, pos_p1, 4);
 
     // game init p2
     direction_t dir_p2 = DOWN;
     position_t pos_p2;
-    pos_p2.x = 3;
-    pos_p2.y = 6;
+    pos_p2.x = 1;
+    pos_p2.y = 3;
     tron_init(&player_2, dir_p2, pos_p2, 4);
 
 }
@@ -181,21 +181,20 @@ static void display_task()
         }
 
         // draw listening lightbike
-        int k = 0;
-        while (get_listen_player()->snake[k].value != 111) {
-            display_set_pix(get_listen_player()->snake[i].pos, get_listen_player()->snake[k].value);
-            k++;
+        int j = 0;
+        while (get_listen_player()->snake[j].value != 111) {
+            display_set_pix(get_listen_player()->snake[j].pos, get_listen_player()->snake[j].value);
+            j++;
         }
         // Update display
         
-        int l;
-
-        for (k = 0; k < TINYGL_HEIGHT; k++) {
-            for (l = 0; l < TINYGL_WIDTH; l++) {
-                tinygl_point_t point = {k, l};
-                tinygl_draw_point (point, display_buffer[k][l]);
+        
+         for (j = 0; j < TINYGL_HEIGHT; j++)
+            for (i = 0; i < TINYGL_WIDTH; i++)
+            {
+                tinygl_point_t point = {i, j};
+                tinygl_draw_point (point, display_buffer[i][j]);
             }
-        }
     }
 
     tinygl_update ();
