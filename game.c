@@ -77,15 +77,15 @@ static void game_init(void)
     // game init p1
     direction_t dir_p1 = UP;
     position_t pos_p1;
-    pos_p1.x = 2;
+    pos_p1.x = 1;
     pos_p1.y = 0;
     tron_init(&player_1, dir_p1, pos_p1, 4);
 
     // game init p2
     direction_t dir_p2 = DOWN;
     position_t pos_p2;
-    pos_p2.x = 1;
-    pos_p2.y = 3;
+    pos_p2.x = 3;
+    pos_p2.y = 6;
     tron_init(&player_2, dir_p2, pos_p2, 4);
 
 }

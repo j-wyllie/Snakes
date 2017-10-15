@@ -6,8 +6,6 @@
 #define LIGHTBIKE_MOVE_PERIOD 100
 
 
-static tron_timer timer;
-
 void tron_init(tron_lightbike_t* player, direction_t dir, position_t pos, uint8_t snake_length)
 {
     player->direction = dir;
@@ -28,15 +26,15 @@ void tron_init(tron_lightbike_t* player, direction_t dir, position_t pos, uint8_
         }
     }
 
-    timer.move_clock = 0;
-    timer.move_period = LIGHTBIKE_MOVE_PERIOD;
+    player->timer.move_clock = 0;
+    player->timer.move_period = LIGHTBIKE_MOVE_PERIOD;
 }
 
 
 
 void tron_set_lightbike_dir(tron_lightbike_t* player, direction_t d)
 {
-        player->direction = d;
+    player->direction = d;
 }
 
 
@@ -98,9 +96,9 @@ void tron_move_lightbike(tron_lightbike_t* player)
 
 uint8_t tron_update(tron_lightbike_t* player)
 {
-    timer.move_clock++;
-    if (timer.move_clock >= timer.move_period) {
-        timer.move_clock = 0;
+    player->timer.move_clock++;
+    if (player->timer.move_clock >= player->timer.move_period) {
+        player->timer.move_clock = 0;
         tron_move_lightbike(player);
     }
     return 0;
