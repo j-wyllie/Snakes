@@ -64,20 +64,21 @@ static void display_wipe()
 
 static void display_task()
 {
-    // clear the screen
-    display_wipe();
-    tinygl_clear();
 
-    // draw lightbike
-    tron_lightbike_t lightbike = tron_get_lightbike();
-    int i = 0;
-    while (lightbike.snake[i].value != 111) {
-        display_set_pix(lightbike.snake[i].pos, lightbike.snake[i].value);
-        i++;
-    }
-
-    int j;
     if (state == STATE_PLAYING) {
+        // clear the screen
+        display_wipe();
+        tinygl_clear();
+
+        // draw lightbike
+        tron_lightbike_t lightbike = tron_get_lightbike();
+        int i = 0;
+        while (lightbike.snake[i].value != 111) {
+            display_set_pix(lightbike.snake[i].pos, lightbike.snake[i].value);
+            i++;
+        }
+
+        int j;
         /* Update display.  */
         for (j = 0; j < TINYGL_HEIGHT; j++)
             for (i = 0; i < TINYGL_WIDTH; i++)

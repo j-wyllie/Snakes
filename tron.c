@@ -1,7 +1,7 @@
 #include "tron.h"
 
 #define LIGHTBIKE_INC 1
-#define LIGHTBIKE_MOVE_PERIOD 150
+#define LIGHTBIKE_MOVE_PERIOD 50
 
 static tron_lightbike_t lightbike;
 static tron_timer timer;
