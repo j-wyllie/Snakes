@@ -32,7 +32,8 @@ typedef struct
 typedef struct
 {
     direction_t direction;
-    position_t position;            // position of the snake's head
+    direction_t last_direction;
+    position_t position; 
     pixel_t snake[8];
     tron_timer timer;
 } tron_lightbike_t;

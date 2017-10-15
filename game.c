@@ -12,7 +12,7 @@
 
 enum {DISPLAY_UPDATE_RATE = 500};
 enum {FLASHER_UPDATE_RATE = 500};
-enum {BUTTON_POLL_RATE = 100};
+enum {BUTTON_POLL_RATE = 200};
 enum {GAME_UPDATE_RATE = 100};
 
 typedef enum {STATE_DUMMY, STATE_INIT, STATE_START,
@@ -35,20 +35,20 @@ static void display_set_pix(position_t pos, uint8_t value)
 
 static tron_lightbike_t* get_control_player(void)
 {
-    /*if (controlPlayer == 1) {
-        return player_1;
+    if (controlPlayer == 1) {
+        return &player_1;
     }
-    */
+    
     return &player_2;
     
 }
 
 static tron_lightbike_t*  get_listen_player(void)
 {
-    /*if (controlPlayer == 1) {
-        return player_2;
+    if (controlPlayer == 2) {
+        return &player_2;
     }
-    */
+    
     return &player_1;
 }
 
@@ -72,7 +72,7 @@ static void game_init(void)
     navswitch_init ();
 
     // Initialise IR driver
-    //ir_uart_init();
+    ir_uart_init();
 
     // game init p1
     direction_t dir_p1 = UP;
@@ -90,27 +90,43 @@ static void game_init(void)
 
 }
 
-/*
+
 static void choose_player(void)
 {
 
     pacer_init(500);
     // display instrution
-    char str[] = "Choose Player";
-    tinygl_text_mode_set (TINYGL_TEXT_MODE_SCROLL);
+    char str[] = "Welcome to Snake";
     tinygl_text(str);
+    
+    
 
 
     while(1) {
         pacer_wait();
         tinygl_update ();
         navswitch_update ();
-        if (navswitch_push_event_p (NAVSWITCH_PUSH)) {
+		if (navswitch_push_event_p (NAVSWITCH_PUSH)) {
+            ir_uart_putc ('H');
             break;
         }
+		static char c = '\0';
+        if (ir_uart_read_ready_p ()) {
+			c = ir_uart_getc();
+			if (c == 'H') {
+				controlPlayer = 1;
+				break;
+			}
+		} else {
+			if (c == 'H') {
+				controlPlayer = 2;
+				break;
+			}
+		}
     }
-    tinygl_text_mode_set (TINYGL_TEXT_MODE_STEP);
+    
 
+    /*
     // choose player
     char one[2] = {'1','\0'};
     char two[2] = {'2','\0'};
@@ -148,11 +164,11 @@ static void choose_player(void)
             }
         }
     }
-
-    controlPlayer = selected - '0';
+*/
+    
     tinygl_clear ();
 }
-*/
+
 
 
 
@@ -181,11 +197,16 @@ static void display_task()
         }
 
         // draw listening lightbike
+        static uint8_t dimmer;
         int j = 0;
-        while (get_listen_player()->snake[j].value != 111) {
-            display_set_pix(get_listen_player()->snake[j].pos, get_listen_player()->snake[j].value);
-            j++;
-        }
+        dimmer++;
+        if (dimmer > 20){
+			dimmer = 0;
+			while (get_listen_player()->snake[j].value != 111) {
+				display_set_pix(get_listen_player()->snake[j].pos, get_listen_player()->snake[j].value);
+				j++;
+			}
+		}
         // Update display
         
         
@@ -210,8 +231,11 @@ static void navswitch_task()
             break;
 
         case STATE_PLAYING:
+            if(get_control_player()->last_direction == DOWN){
+				break;
+			}
             tron_set_lightbike_dir(get_control_player(), UP);
-            //ir_uart_putc('U');
+            ir_uart_putc('U');
             break;
 
         default:
@@ -225,8 +249,11 @@ static void navswitch_task()
             break;
 
         case STATE_PLAYING:
+            if(get_control_player()->last_direction == UP){
+				break;
+			}
             tron_set_lightbike_dir(get_control_player(), DOWN);
-            //ir_uart_putc('D');
+            ir_uart_putc('D');
             break;
 
         default:
@@ -240,8 +267,11 @@ static void navswitch_task()
             break;
 
         case STATE_PLAYING:
+            if(get_control_player()->last_direction == LEFT){
+				break;
+			}
             tron_set_lightbike_dir(get_control_player(), RIGHT);
-            //ir_uart_putc('R');
+            ir_uart_putc('R');
             break;
 
         default:
@@ -255,8 +285,11 @@ static void navswitch_task()
             break;
 
         case STATE_PLAYING:
+            if(get_control_player()->last_direction == RIGHT){
+				break;
+			}
             tron_set_lightbike_dir(get_control_player(), LEFT);
-            //ir_uart_putc('L');
+            ir_uart_putc('L');
             break;
 
         default:
@@ -284,7 +317,7 @@ static void navswitch_task()
 
 static void receive_task()
 {
-	/*
+	
     if (ir_uart_read_ready_p ()) {
         char respone = ir_uart_getc ();
 
@@ -303,7 +336,7 @@ static void receive_task()
         }
 
     }
-	*/
+	
 }
 
 static void game_task()
@@ -343,6 +376,7 @@ int main(void)
 {
 	system_init ();
     game_init();
+    choose_player();
 
     
 
@@ -359,7 +393,7 @@ int main(void)
         },
         {
             .func = receive_task,
-            .period = TASK_RATE / GAME_UPDATE_RATE,
+            .period = TASK_RATE / BUTTON_POLL_RATE,
             .data = 0
         },
         {
