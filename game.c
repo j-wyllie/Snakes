@@ -6,6 +6,8 @@
 #include "../fonts/font3x5_1.h"
 #include "tron.h"
 
+static bool isGameOver;
+
 //tinygl_pixel_value_t
 
 enum {DISPLAY_UPDATE_RATE = 500};
