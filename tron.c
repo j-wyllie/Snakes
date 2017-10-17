@@ -1,11 +1,16 @@
+/**********************************************************************
+    ENCE260 Assignment
+
+    Joshua, WYLLIE - jwy31
+    Man On, LAI    - mla134
+**********************************************************************/
+
 #include "tron.h"
-
-
 
 #define LIGHTBIKE_INC 1
 #define LIGHTBIKE_MOVE_PERIOD 200
 
-
+// initalises a bikes values
 void tron_init(tron_lightbike_t* player, direction_t dir, position_t pos, uint8_t snake_length)
 {
     player->direction = dir;
@@ -30,15 +35,12 @@ void tron_init(tron_lightbike_t* player, direction_t dir, position_t pos, uint8_
     player->timer.move_period = LIGHTBIKE_MOVE_PERIOD;
 }
 
-
-
+// sets lightbike direction
 void tron_set_lightbike_dir(tron_lightbike_t* player, direction_t d)
 {
     player->direction = d;
 }
-
-
-
+// moves the possition of the lightbike
 void tron_move_lightbike(tron_lightbike_t* player)
 {
     // update head position
@@ -88,6 +90,7 @@ void tron_move_lightbike(tron_lightbike_t* player)
     player->snake[3].pos = temp;
 }
 
+// checks for a collison between lightbikes
 which_bike_t tron_collision(tron_lightbike_t* control, tron_lightbike_t* listner)
 {
     if (control->position.x == listner->position.x && control->position.y == listner->position.y){
@@ -109,6 +112,7 @@ which_bike_t tron_collision(tron_lightbike_t* control, tron_lightbike_t* listner
     return NEITHER;
 }
 
+// updates the lightbikes, checks if movements nessiary
 uint8_t tron_update(tron_lightbike_t* player)
 {
 

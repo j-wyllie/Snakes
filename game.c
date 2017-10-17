@@ -1,3 +1,11 @@
+/**********************************************************************
+    ENCE260 Assignment
+
+    Joshua, WYLLIE - jwy31
+    Man On, LAI    - mla134
+**********************************************************************/
+
+
 #include "system.h"
 #include "tinygl.h"
 #include "task.h"
@@ -12,10 +20,8 @@
 
 /**********************************************************************
 TODO:
-* Put names etc. at top of each file
 * add display module and refactor
-* implement collision detection function
-*
+* check for bugs
 **********************************************************************/
 
 // game properties
@@ -38,11 +44,13 @@ static tinygl_pixel_value_t display_buffer[TINYGL_WIDTH][TINYGL_HEIGHT] = {{0}};
 
 // Setters and Getters
 
+// set a pixel of the display buffer on
 static void display_set_pix(position_t pos, uint8_t value)
 {
     display_buffer[pos.x][6 - pos.y] = value;
 }
 
+// returns the control player
 static tron_lightbike_t* get_control_player(void)
 {
     if (controlPlayer == 1) {
@@ -52,7 +60,8 @@ static tron_lightbike_t* get_control_player(void)
     }
 }
 
-static tron_lightbike_t*  get_listen_player(void)
+// returns the listen player
+static tron_lightbike_t* get_listen_player(void)
 {
     if (controlPlayer == 1) {
         return &player_2;
@@ -68,6 +77,7 @@ static void display_task(void);
 static void navswitch_task(void);
 static void game_task(void);
 
+// initalises game environment
 static void game_init(void)
 {
     // display_init
@@ -99,6 +109,7 @@ static void game_init(void)
 }
 
 
+// prints welcom message and decides listener and control player
 static void choose_player(void)
 {
     pacer_init(500);
@@ -131,6 +142,7 @@ static void choose_player(void)
     tinygl_clear();
 }
 
+// displays whether you won or lost
 void display_over_message(who_lost)
 {
     pacer_init(500);
@@ -138,17 +150,16 @@ void display_over_message(who_lost)
     char textWin[] = "WIN";
     char textLose[] = "LOST";
 
-    switch(who_lost)
-    {
-        case BOTH:
-            tinygl_text(textLose);
-            break;
-        case LISTNER:
-            tinygl_text(textWin);
-            break;
-        case CONTROLER:
-            tinygl_text(textLose);
-            break;
+    switch(who_lost) {
+    case BOTH:
+        tinygl_text(textLose);
+        break;
+    case LISTNER:
+        tinygl_text(textWin);
+        break;
+    case CONTROLER:
+        tinygl_text(textLose);
+        break;
     }
     while(1) {
         pacer_wait();
@@ -156,7 +167,7 @@ void display_over_message(who_lost)
     }
 }
 
-
+// clears the display buffer
 static void display_wipe(void)
 {
     int i, j;
@@ -167,6 +178,7 @@ static void display_wipe(void)
     }
 }
 
+// draws to and updates the display
 static void display_task()
 {
     if (state == STATE_PLAYING) {
@@ -185,19 +197,17 @@ static void display_task()
         static uint8_t dimmer;
         int j = 0;
         dimmer++;
-        if (dimmer > 10){       // dimm listning bike
+        if (dimmer > 10) {          // dimm listning bike
             dimmer = 0;
             while (get_listen_player()->snake[j].value != 111) {
                 display_set_pix(get_listen_player()->snake[j].pos, get_listen_player()->snake[j].value);
                 j++;
             }
         }
+
         // Update display
-
-
-         for (j = 0; j < TINYGL_HEIGHT; j++)
-            for (i = 0; i < TINYGL_WIDTH; i++)
-            {
+        for (j = 0; j < TINYGL_HEIGHT; j++)
+            for (i = 0; i < TINYGL_WIDTH; i++) {
                 tinygl_point_t point = {i, j};
                 tinygl_draw_point (point, display_buffer[i][j]);
             }
@@ -206,6 +216,7 @@ static void display_task()
     tinygl_update ();
 }
 
+// update and send player directions
 static void navswitch_task()
 {
     navswitch_update ();
@@ -216,7 +227,7 @@ static void navswitch_task()
             break;
 
         case STATE_PLAYING:
-            if(get_control_player()->last_direction == DOWN){
+            if(get_control_player()->last_direction == DOWN) {
                 break;
             }
             tron_set_lightbike_dir(get_control_player(), UP);
@@ -234,7 +245,7 @@ static void navswitch_task()
             break;
 
         case STATE_PLAYING:
-            if(get_control_player()->last_direction == UP){
+            if(get_control_player()->last_direction == UP) {
                 break;
             }
             tron_set_lightbike_dir(get_control_player(), DOWN);
@@ -252,7 +263,7 @@ static void navswitch_task()
             break;
 
         case STATE_PLAYING:
-            if(get_control_player()->last_direction == LEFT){
+            if(get_control_player()->last_direction == LEFT) {
                 break;
             }
             tron_set_lightbike_dir(get_control_player(), RIGHT);
@@ -270,7 +281,7 @@ static void navswitch_task()
             break;
 
         case STATE_PLAYING:
-            if(get_control_player()->last_direction == RIGHT){
+            if(get_control_player()->last_direction == RIGHT) {
                 break;
             }
             tron_set_lightbike_dir(get_control_player(), LEFT);
@@ -297,8 +308,7 @@ static void navswitch_task()
     }
 }
 
-
-
+// receves and sets other players direction
 static void receive_task()
 {
 
@@ -327,6 +337,7 @@ static void receive_task()
 
 }
 
+// updates game logic depending on game state
 static void game_task()
 {
     static which_bike_t who_lost;
@@ -360,6 +371,7 @@ static void game_task()
     }
 }
 
+// main
 int main(void)
 {
     system_init ();
