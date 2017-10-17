@@ -47,19 +47,18 @@ static tron_lightbike_t* get_control_player(void)
 {
     if (controlPlayer == 1) {
         return &player_1;
+    } else {
+        return &player_2;
     }
-
-    return &player_2;
-
 }
 
 static tron_lightbike_t*  get_listen_player(void)
 {
-    if (controlPlayer == 2) {
+    if (controlPlayer == 1) {
         return &player_2;
+    } else {
+        return &player_1;
     }
-
-    return &player_1;
 }
 
 // game functions
@@ -108,7 +107,7 @@ static void choose_player(void)
     char text[] = "WELCOME TO SNAKES";
     tinygl_text(text);
 
-    controlPlayer = 1;
+    controlPlayer = 2;
     uint8_t player_chosen = 0;
     while(!player_chosen) {
         pacer_wait();
@@ -264,7 +263,6 @@ static void navswitch_task()
     if (navswitch_push_event_p (NAVSWITCH_PUSH)) {
         switch (state) {
         case STATE_READY:
-            state = STATE_START;
             break;
 
         case STATE_PLAYING:
@@ -322,8 +320,10 @@ static void game_task()
         break;
 
     case STATE_OVER:
+        break;
 
     case STATE_READY:
+        break;
 
     case STATE_START:
         choose_player();
