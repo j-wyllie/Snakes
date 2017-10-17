@@ -16,7 +16,7 @@ all: game.out
 
 
 # Compile: create object files from C source files.
-game.o: game.c ../../drivers/avr/system.h ../../utils/tinygl.h ../../utils/task.h ../../drivers/navswitch.h ../../drivers/led.h ../../fonts/font3x5_1.h ../../utils/font.h tron.h ../../drivers/avr/ir_uart.h ../../utils/pacer.h
+game.o: game.c ../../drivers/avr/system.h ../../utils/tinygl.h ../../utils/task.h ../../drivers/navswitch.h ../../drivers/led.h ../../fonts/font3x5_1.h ../../utils/font.h tron.h player.h ../../drivers/avr/ir_uart.h ../../utils/pacer.h ../../drivers/button.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
 system.o: ../../drivers/avr/system.c ../../drivers/avr/system.h
@@ -67,10 +67,15 @@ pacer.o: ../../utils/pacer.c ../../drivers/avr/system.h ../../drivers/avr/timer.
 tron.o: tron.c tron.h ../../utils/tinygl.h ../../drivers/avr/system.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
+player.o: player.c player.h ../../utils/tinygl.h ../../drivers/avr/system.h
+	$(CC) -c $(CFLAGS) $< -o $@
+
+button.o: ../../drivers/button.c ../../drivers/button.h ../../drivers/avr/system.h
+	$(CC) -c $(CFLAGS) $< -o $@
 
 
 # Link: create ELF output file from object files.
-game.out: game.o system.o pio.o timer.o display.o led.o ledmat.o navswitch.o font.o task.o tinygl.o tron.o ir_uart.o pacer.o timer0.o usart1.o prescale.o
+game.out: game.o system.o pio.o timer.o display.o led.o ledmat.o navswitch.o font.o task.o tinygl.o tron.o ir_uart.o pacer.o timer0.o usart1.o prescale.o player.o button.o
 	$(CC) $(CFLAGS) $^ -o $@ -lm
 	$(SIZE) $@
 

@@ -14,30 +14,30 @@
 #include "ir_uart.h"
 #include "pacer.h"
 #include "../fonts/font3x5_1.h"
+#include "button.h"
 #include "tron.h"
+#include "player.h"
 
 #define TEXT_SPEED 10
+#define FLASH_RATE 5
 
 /**********************************************************************
 TODO:
-* add display module and refactor
-* check for bugs
+*
 **********************************************************************/
 
 // game properties
 
-enum {DISPLAY_UPDATE_RATE = 500};
-enum {FLASHER_UPDATE_RATE = 500};
+
+enum {DISPLAY_UPDATE_RATE = 700};
 enum {BUTTON_POLL_RATE = 200};
 enum {GAME_UPDATE_RATE = 100};
+enum {RECEIVE_RATE = 250};
 
-typedef enum {STATE_DUMMY, STATE_INIT, STATE_START,
+typedef enum {STATE_INIT, STATE_START,
               STATE_PLAYING, STATE_OVER,
-              STATE_READY
              } state_t;
 
-static tron_lightbike_t player_1, player_2;
-static int controlPlayer;
 static state_t state = STATE_INIT;
 static tinygl_pixel_value_t display_buffer[TINYGL_WIDTH][TINYGL_HEIGHT] = {{0}};
 
@@ -48,26 +48,6 @@ static tinygl_pixel_value_t display_buffer[TINYGL_WIDTH][TINYGL_HEIGHT] = {{0}};
 static void display_set_pix(position_t pos, uint8_t value)
 {
     display_buffer[pos.x][6 - pos.y] = value;
-}
-
-// returns the control player
-static tron_lightbike_t* get_control_player(void)
-{
-    if (controlPlayer == 1) {
-        return &player_1;
-    } else {
-        return &player_2;
-    }
-}
-
-// returns the listen player
-static tron_lightbike_t* get_listen_player(void)
-{
-    if (controlPlayer == 1) {
-        return &player_2;
-    } else {
-        return &player_1;
-    }
 }
 
 // game functions
@@ -88,59 +68,18 @@ static void game_init(void)
     tinygl_text_speed_set (TEXT_SPEED);
 
     // navswitch init
-    navswitch_init ();
+    navswitch_init();
 
-    // Initialise IR driver
+    // initatise button
+    button_init();
+
+    // initialise IR driver
     ir_uart_init();
 
-    // game init p1
-    direction_t dir_p1 = UP;
-    position_t pos_p1;
-    pos_p1.x = 1;
-    pos_p1.y = 0;
-    tron_init(&player_1, dir_p1, pos_p1, 4);
-
-    // game init p2
-    direction_t dir_p2 = DOWN;
-    position_t pos_p2;
-    pos_p2.x = 3;
-    pos_p2.y = 6;
-    tron_init(&player_2, dir_p2, pos_p2, 4);
+    // initalise players
+    players_init();
 }
 
-
-// prints welcom message and decides listener and control player
-static void choose_player(void)
-{
-    pacer_init(500);
-    // display instrution
-    char text[] = "WELCOME TO SNAKES";
-    tinygl_text(text);
-
-    controlPlayer = 2;
-    while(1) {
-        pacer_wait();
-        tinygl_update ();
-        navswitch_update ();
-
-        static char c = '\0';
-        if (ir_uart_read_ready_p()) {       // other player clicked first
-            c = ir_uart_getc();
-            if (c == '1') {
-                controlPlayer = 2;
-                break;
-            }
-        }
-
-        if (navswitch_push_event_p (NAVSWITCH_PUSH)) {
-            ir_uart_putc ('1');             // you clicked first
-            controlPlayer = 1;
-            break;
-        }
-    }
-
-    tinygl_clear();
-}
 
 // displays whether you won or lost
 void display_over_message(who_lost)
@@ -163,8 +102,44 @@ void display_over_message(who_lost)
     }
     while(1) {
         pacer_wait();
-        tinygl_update ();
+        tinygl_update();
+        button_update();
+        if (button_push_event_p(0)) {
+            return;
+        }
     }
+}
+
+// prints welcom message and decides listener and control player
+static void choose_player(void)
+{
+    pacer_init(500);
+    // display instrution
+    char text[] = "WELCOME TO SNAKES";
+    tinygl_text(text);
+
+    while(1) {
+        pacer_wait();
+        tinygl_update ();
+        navswitch_update ();
+
+        static char c = '\0';
+        if (ir_uart_read_ready_p()) {       // other player clicked first
+            c = ir_uart_getc();
+            if (c == '1') {
+                set_control_player(2);
+                break;
+            }
+        }
+
+        if (navswitch_push_event_p (NAVSWITCH_PUSH)) {
+            ir_uart_putc ('1');             // you clicked first
+            set_control_player(1);
+            break;
+        }
+    }
+
+    tinygl_clear();
 }
 
 // clears the display buffer
@@ -197,7 +172,7 @@ static void display_task()
         static uint8_t dimmer;
         int j = 0;
         dimmer++;
-        if (dimmer > 10) {          // dimm listning bike
+        if (dimmer > FLASH_RATE) {          // dimm listning bike
             dimmer = 0;
             while (get_listen_player()->snake[j].value != 111) {
                 display_set_pix(get_listen_player()->snake[j].pos, get_listen_player()->snake[j].value);
@@ -223,9 +198,6 @@ static void navswitch_task()
 
     if (navswitch_push_event_p (NAVSWITCH_NORTH)) {
         switch (state) {
-        case STATE_READY:
-            break;
-
         case STATE_PLAYING:
             if(get_control_player()->last_direction == DOWN) {
                 break;
@@ -241,9 +213,6 @@ static void navswitch_task()
 
     if (navswitch_push_event_p (NAVSWITCH_SOUTH)) {
         switch (state) {
-        case STATE_READY:
-            break;
-
         case STATE_PLAYING:
             if(get_control_player()->last_direction == UP) {
                 break;
@@ -259,9 +228,6 @@ static void navswitch_task()
 
     if (navswitch_push_event_p (NAVSWITCH_EAST)) {
         switch (state) {
-        case STATE_READY:
-            break;
-
         case STATE_PLAYING:
             if(get_control_player()->last_direction == LEFT) {
                 break;
@@ -277,9 +243,6 @@ static void navswitch_task()
 
     if (navswitch_push_event_p (NAVSWITCH_WEST)) {
         switch (state) {
-        case STATE_READY:
-            break;
-
         case STATE_PLAYING:
             if(get_control_player()->last_direction == RIGHT) {
                 break;
@@ -296,9 +259,6 @@ static void navswitch_task()
 
     if (navswitch_push_event_p (NAVSWITCH_PUSH)) {
         switch (state) {
-        case STATE_READY:
-            break;
-
         case STATE_PLAYING:
             break;
 
@@ -359,9 +319,7 @@ static void game_task()
 
     case STATE_OVER:
         display_over_message(who_lost);
-        break;
-
-    case STATE_READY:
+        state = STATE_INIT;
         break;
 
     case STATE_START:
@@ -389,7 +347,7 @@ int main(void)
         },
         {
             .func = receive_task,
-            .period = TASK_RATE / BUTTON_POLL_RATE,
+            .period = TASK_RATE / RECEIVE_RATE,
             .data = 0
         },
         {
