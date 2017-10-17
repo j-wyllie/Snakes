@@ -8,6 +8,16 @@
 #include "../fonts/font3x5_1.h"
 #include "tron.h"
 
+#define TEXT_SPEED 10
+
+/**********************************************************************
+TODO:
+* Put names etc. at top of each file
+* add display module and refactor
+* implement collision detection function
+*
+**********************************************************************/
+
 // game properties
 
 enum {DISPLAY_UPDATE_RATE = 500};
@@ -22,7 +32,7 @@ typedef enum {STATE_DUMMY, STATE_INIT, STATE_START,
 
 static tron_lightbike_t player_1, player_2;
 static int controlPlayer;
-static state_t state = STATE_PLAYING;
+static state_t state = STATE_INIT;
 static tinygl_pixel_value_t display_buffer[TINYGL_WIDTH][TINYGL_HEIGHT] = {{0}};
 
 
@@ -38,9 +48,9 @@ static tron_lightbike_t* get_control_player(void)
     if (controlPlayer == 1) {
         return &player_1;
     }
-    
+
     return &player_2;
-    
+
 }
 
 static tron_lightbike_t*  get_listen_player(void)
@@ -48,7 +58,7 @@ static tron_lightbike_t*  get_listen_player(void)
     if (controlPlayer == 2) {
         return &player_2;
     }
-    
+
     return &player_1;
 }
 
@@ -66,7 +76,7 @@ static void game_init(void)
     tinygl_font_set (&font3x5_1);
     tinygl_text_mode_set (TINYGL_TEXT_MODE_SCROLL);
     tinygl_text_dir_set (TINYGL_TEXT_DIR_ROTATE);
-    tinygl_text_speed_set (10);
+    tinygl_text_speed_set (TEXT_SPEED);
 
     // navswitch init
     navswitch_init ();
@@ -87,7 +97,6 @@ static void game_init(void)
     pos_p2.x = 3;
     pos_p2.y = 6;
     tron_init(&player_2, dir_p2, pos_p2, 4);
-
 }
 
 
@@ -96,80 +105,34 @@ static void choose_player(void)
 
     pacer_init(500);
     // display instrution
-    char str[] = "Welcome to Snake";
-    tinygl_text(str);
-    
-    
+    char text[] = "WELCOME TO SNAKES";
+    tinygl_text(text);
 
-
-    while(1) {
+    controlPlayer = 1;
+    uint8_t player_chosen = 0;
+    while(!player_chosen) {
         pacer_wait();
         tinygl_update ();
         navswitch_update ();
-		if (navswitch_push_event_p (NAVSWITCH_PUSH)) {
-            ir_uart_putc ('H');
-            break;
-        }
-		static char c = '\0';
-        if (ir_uart_read_ready_p ()) {
-			c = ir_uart_getc();
-			if (c == 'H') {
-				controlPlayer = 1;
-				break;
-			}
-		} else {
-			if (c == 'H') {
-				controlPlayer = 2;
-				break;
-			}
-		}
-    }
-    
 
-    /*
-    // choose player
-    char one[2] = {'1','\0'};
-    char two[2] = {'2','\0'};
-    char selected = '1';
-
-    tinygl_text(one);
-
-    while(1) {
-        pacer_wait ();
-        tinygl_update ();
-        navswitch_update ();
-
-        if (navswitch_push_event_p (NAVSWITCH_NORTH)) {
-            tinygl_text(one);
-            selected = one[0];
-        }
-        if (navswitch_push_event_p (NAVSWITCH_SOUTH)) {
-            tinygl_text(two);
-            selected = two[0];
-        }
-        if (navswitch_push_event_p (NAVSWITCH_PUSH)) {
-            if (selected == '1') {
-                ir_uart_putc ('2');
-            }
-            if (selected == '2') {
-                ir_uart_putc ('1');
-            }
-            break;
-        }
-
-        if (ir_uart_read_ready_p ()) {
-            selected = ir_uart_getc ();
-            if (selected == '1' || selected == '2') {
+        static char c = '\0';
+        if (ir_uart_read_ready_p()) {       // other player clicked first
+            c = ir_uart_getc();
+            if (c == '1') {
+                controlPlayer = 2;
                 break;
             }
         }
+
+        if (navswitch_push_event_p (NAVSWITCH_PUSH)) {
+            ir_uart_putc ('1');             // you clicked first
+            controlPlayer = 1;
+            break;
+        }
     }
-*/
-    
-    tinygl_clear ();
+
+    tinygl_clear();
 }
-
-
 
 
 static void display_wipe(void)
@@ -200,16 +163,16 @@ static void display_task()
         static uint8_t dimmer;
         int j = 0;
         dimmer++;
-        if (dimmer > 20){
-			dimmer = 0;
-			while (get_listen_player()->snake[j].value != 111) {
-				display_set_pix(get_listen_player()->snake[j].pos, get_listen_player()->snake[j].value);
-				j++;
-			}
-		}
+        if (dimmer > 10){       // dimm listning bike
+            dimmer = 0;
+            while (get_listen_player()->snake[j].value != 111) {
+                display_set_pix(get_listen_player()->snake[j].pos, get_listen_player()->snake[j].value);
+                j++;
+            }
+        }
         // Update display
-        
-        
+
+
          for (j = 0; j < TINYGL_HEIGHT; j++)
             for (i = 0; i < TINYGL_WIDTH; i++)
             {
@@ -232,8 +195,8 @@ static void navswitch_task()
 
         case STATE_PLAYING:
             if(get_control_player()->last_direction == DOWN){
-				break;
-			}
+                break;
+            }
             tron_set_lightbike_dir(get_control_player(), UP);
             ir_uart_putc('U');
             break;
@@ -250,8 +213,8 @@ static void navswitch_task()
 
         case STATE_PLAYING:
             if(get_control_player()->last_direction == UP){
-				break;
-			}
+                break;
+            }
             tron_set_lightbike_dir(get_control_player(), DOWN);
             ir_uart_putc('D');
             break;
@@ -268,8 +231,8 @@ static void navswitch_task()
 
         case STATE_PLAYING:
             if(get_control_player()->last_direction == LEFT){
-				break;
-			}
+                break;
+            }
             tron_set_lightbike_dir(get_control_player(), RIGHT);
             ir_uart_putc('R');
             break;
@@ -286,8 +249,8 @@ static void navswitch_task()
 
         case STATE_PLAYING:
             if(get_control_player()->last_direction == RIGHT){
-				break;
-			}
+                break;
+            }
             tron_set_lightbike_dir(get_control_player(), LEFT);
             ir_uart_putc('L');
             break;
@@ -317,7 +280,7 @@ static void navswitch_task()
 
 static void receive_task()
 {
-	
+
     if (ir_uart_read_ready_p ()) {
         char respone = ir_uart_getc ();
 
@@ -336,30 +299,26 @@ static void receive_task()
         }
 
     }
-	
+
 }
 
 static void game_task()
 {
+    static which_bike_t who_lost;
+
     switch (state) {
     case STATE_PLAYING:
-
-        tron_update(get_control_player());
-        tron_update(get_listen_player());
-
-
-        /*
-            if (! spacey_update ())
-            {
-                game_over_display (message);
-                game_over_ticks = 0;
-                led_set (LED1, 1);
-                state = STATE_OVER;
-            }
-            */
+        if ((who_lost = tron_collision()) == NEITHER) {
+            tron_update(get_control_player());
+            tron_update(get_listen_player());
+        } else {
+            state = STATE_OVER;
+        }
         break;
 
     case STATE_INIT:
+        game_init();
+        state = STATE_START;
         break;
 
     case STATE_OVER:
@@ -367,6 +326,7 @@ static void game_task()
     case STATE_READY:
 
     case STATE_START:
+        choose_player();
         state = STATE_PLAYING;
         break;
     }
@@ -374,11 +334,7 @@ static void game_task()
 
 int main(void)
 {
-	system_init ();
-    game_init();
-    choose_player();
-
-    
+    system_init ();
 
     task_t tasks[] = {
         {
@@ -402,9 +358,6 @@ int main(void)
             .data = 0
         },
     };
-
-
-
 
     task_schedule (tasks, ARRAY_SIZE (tasks));
     return 0;

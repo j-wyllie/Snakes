@@ -11,6 +11,11 @@ typedef enum
     UP, DOWN, LEFT, RIGHT
 } direction_t;
 
+typedef enum
+{
+    NEITHER, CONTROLER, LISTNER, BOTH
+} which_bike_t;
+
 typedef struct
 {
     uint8_t x;
@@ -33,7 +38,7 @@ typedef struct
 {
     direction_t direction;
     direction_t last_direction;
-    position_t position; 
+    position_t position;
     pixel_t snake[8];
     tron_timer timer;
 } tron_lightbike_t;
@@ -43,6 +48,8 @@ void tron_init(tron_lightbike_t*, direction_t, position_t, uint8_t);
 void tron_set_lightbike_dir(tron_lightbike_t*, direction_t);
 
 void tron_move_lightbike(tron_lightbike_t*);
+
+which_bike_t tron_collision(void);
 
 uint8_t tron_update(tron_lightbike_t*);
 

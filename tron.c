@@ -44,7 +44,7 @@ void tron_move_lightbike(tron_lightbike_t* player)
     // update head position
     switch (player->direction)
     {
-        case UP:           
+        case UP:
             player->position.y += LIGHTBIKE_INC;
             break;
         case DOWN:
@@ -70,42 +70,24 @@ void tron_move_lightbike(tron_lightbike_t* player)
 
     temp1 = player->snake[3].pos;
     player->snake[3].pos = temp;
-    
-    
+}
 
-    /*
-    position_t temp1 = lightbike.position;
-    position_t temp2;
-    int i = 0;
-    while (lightbike.snake[i].value != 111) {
-        temp2 = lightbike.snake[i].pos;
-        lightbike.snake[i].pos = temp1;
-        temp1 = temp2;
-    } */
-    /*
-    pixel_t previous;
-    pixel_t current;
-    current.pos = lightbike.position;
-    int i = 0;
-    while (lightbike.snake[i].value != 111) {
-        previous = current;
-        current = lightbike.snake[i];
-        lightbike.snake[i] = previous;
-        lightbike.snake[i].value = 1;
-    }
-    */
+which_bike_t tron_collision()
+{
+    // TODO: check for colisiion;
+    return NEITHER;
 }
 
 uint8_t tron_update(tron_lightbike_t* player)
 {
-        
+
     player->timer.move_clock++;
     if (player->timer.move_clock >= player->timer.move_period) {
         player->timer.move_clock = 0;
         tron_move_lightbike(player);
     }
-    
+
     player->last_direction = player->direction;
-    
+
     return 0;
 }
