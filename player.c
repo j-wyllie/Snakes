@@ -33,7 +33,7 @@ tron_lightbike_t* get_listen_player(void)
 }
 
 // sets the control player
-int set_control_player(int num)
+void set_control_player(int num)
 {
     controlPlayer = num;
 }

@@ -100,11 +100,12 @@ void display_over_message(who_lost)
         tinygl_text(textLose);
         break;
     }
-    while(1) {
+    while (1) {
         pacer_wait();
         tinygl_update();
         button_update();
         if (button_push_event_p(0)) {
+            tinygl_clear();
             return;
         }
     }
