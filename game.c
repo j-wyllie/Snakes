@@ -101,15 +101,13 @@ static void game_init(void)
 
 static void choose_player(void)
 {
-
     pacer_init(500);
     // display instrution
     char text[] = "WELCOME TO SNAKES";
     tinygl_text(text);
 
     controlPlayer = 2;
-    uint8_t player_chosen = 0;
-    while(!player_chosen) {
+    while(1) {
         pacer_wait();
         tinygl_update ();
         navswitch_update ();
@@ -131,6 +129,31 @@ static void choose_player(void)
     }
 
     tinygl_clear();
+}
+
+void display_over_message(who_lost)
+{
+    pacer_init(500);
+    // display instrution
+    char textWin[] = "WIN";
+    char textLose[] = "LOST";
+
+    switch(who_lost)
+    {
+        case BOTH:
+            tinygl_text(textLose);
+            break;
+        case LISTNER:
+            tinygl_text(textWin);
+            break;
+        case CONTROLER:
+            tinygl_text(textLose);
+            break;
+    }
+    while(1) {
+        pacer_wait();
+        tinygl_update ();
+    }
 }
 
 
@@ -285,15 +308,19 @@ static void receive_task()
         switch (respone) {
         case 'L':
             tron_set_lightbike_dir(get_listen_player(), LEFT);
+            break;
 
         case 'R':
-            tron_set_lightbike_dir(get_listen_player(), RIGHT);;
+            tron_set_lightbike_dir(get_listen_player(), RIGHT);
+            break;
 
         case 'U':
             tron_set_lightbike_dir(get_listen_player(), UP);
+            break;
 
         case 'D':
             tron_set_lightbike_dir(get_listen_player(), DOWN);
+            break;
         }
 
     }
@@ -306,7 +333,7 @@ static void game_task()
 
     switch (state) {
     case STATE_PLAYING:
-        if ((who_lost = tron_collision()) == NEITHER) {
+        if ((who_lost = tron_collision(get_control_player(), get_listen_player())) == NEITHER) {
             tron_update(get_control_player());
             tron_update(get_listen_player());
         } else {
@@ -320,6 +347,7 @@ static void game_task()
         break;
 
     case STATE_OVER:
+        display_over_message(who_lost);
         break;
 
     case STATE_READY:

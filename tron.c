@@ -3,7 +3,7 @@
 
 
 #define LIGHTBIKE_INC 1
-#define LIGHTBIKE_MOVE_PERIOD 100
+#define LIGHTBIKE_MOVE_PERIOD 200
 
 
 void tron_init(tron_lightbike_t* player, direction_t dir, position_t pos, uint8_t snake_length)
@@ -45,16 +45,32 @@ void tron_move_lightbike(tron_lightbike_t* player)
     switch (player->direction)
     {
         case UP:
-            player->position.y += LIGHTBIKE_INC;
+            if (player->position.y < TINYGL_HEIGHT - 1) {
+                player->position.y += LIGHTBIKE_INC;
+            } else {
+                player->position.y = 0;
+            }
             break;
         case DOWN:
-            player->position.y -= LIGHTBIKE_INC;
+            if (player->position.y > 0) {
+                player->position.y -= LIGHTBIKE_INC;
+            } else {
+                player->position.y = TINYGL_HEIGHT - 1;
+            }
             break;
         case LEFT:
-            player->position.x -= LIGHTBIKE_INC;
+            if (player->position.x > 0) {
+                player->position.x -= LIGHTBIKE_INC;
+            } else {
+                player->position.x = TINYGL_WIDTH - 1;
+            }
             break;
         case RIGHT:
-            player->position.x += LIGHTBIKE_INC;
+            if (player->position.x < TINYGL_WIDTH - 1) {
+                player->position.x += LIGHTBIKE_INC;
+            } else {
+                player->position.x = 0;
+            }
             break;
     }
 
@@ -72,9 +88,24 @@ void tron_move_lightbike(tron_lightbike_t* player)
     player->snake[3].pos = temp;
 }
 
-which_bike_t tron_collision()
+which_bike_t tron_collision(tron_lightbike_t* control, tron_lightbike_t* listner)
 {
-    // TODO: check for colisiion;
+    if (control->position.x == listner->position.x && control->position.y == listner->position.y){
+        return BOTH;
+    }
+    int i;
+    for (i = 1; i < 4 ;i++) {
+        if ( control->position.x == listner->snake[i].pos.x && control->position.y == listner->snake[i].pos.y){
+            return CONTROLER;
+        }
+    }
+    for (i = 1; i < 4; i++){
+        if (listner->position.x == control->snake[i].pos.x && listner->position.y == control->snake[i].pos.y){
+            return LISTNER;
+        }
+    }
+
+    // check if the position of snake head
     return NEITHER;
 }
 

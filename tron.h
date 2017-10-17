@@ -49,7 +49,7 @@ void tron_set_lightbike_dir(tron_lightbike_t*, direction_t);
 
 void tron_move_lightbike(tron_lightbike_t*);
 
-which_bike_t tron_collision(void);
+which_bike_t tron_collision(tron_lightbike_t*, tron_lightbike_t*);
 
 uint8_t tron_update(tron_lightbike_t*);
 
