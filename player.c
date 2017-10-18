@@ -7,15 +7,23 @@
 
 #include "player.h"
 
-static int controlPlayer;
+#define P1_INIT_DIR UP
+#define P1_INIT_X 1
+#define P1_INIT_Y 0
+
+#define P2_INIT_DIR DOWN
+#define P2_INIT_X 3
+#define P2_INIT_Y 6
+
+
+static int control_player;
 
 tron_lightbike_t player_1, player_2;
-
 
 // returns the control player
 tron_lightbike_t* get_control_player(void)
 {
-    if (controlPlayer == 1) {
+    if (control_player == 1) {
         return &player_1;
     } else {
         return &player_2;
@@ -25,7 +33,7 @@ tron_lightbike_t* get_control_player(void)
 // returns the listen player
 tron_lightbike_t* get_listen_player(void)
 {
-    if (controlPlayer == 1) {
+    if (control_player == 1) {
         return &player_2;
     } else {
         return &player_1;
@@ -35,24 +43,24 @@ tron_lightbike_t* get_listen_player(void)
 // sets the control player
 void set_control_player(int num)
 {
-    controlPlayer = num;
+    control_player = num;
 }
 
 
 // initalises the players
 void players_init()
 {
-  // game init p1
-    direction_t dir_p1 = UP;
+    // game init p1
+    direction_t dir_p1 = P1_INIT_DIR;
     position_t pos_p1;
-    pos_p1.x = 1;
-    pos_p1.y = 0;
-    tron_init(&player_1, dir_p1, pos_p1, 4);
+    pos_p1.x = P1_INIT_X;
+    pos_p1.y = P1_INIT_Y;
+    tron_init(&player_1, dir_p1, pos_p1);
 
     // game init p2
-    direction_t dir_p2 = DOWN;
+    direction_t dir_p2 = P2_INIT_DIR;
     position_t pos_p2;
-    pos_p2.x = 3;
-    pos_p2.y = 6;
-    tron_init(&player_2, dir_p2, pos_p2, 4);
+    pos_p2.x = P2_INIT_X;
+    pos_p2.y = P2_INIT_Y;
+    tron_init(&player_2, dir_p2, pos_p2);
 }

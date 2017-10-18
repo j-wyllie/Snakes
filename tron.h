@@ -11,7 +11,11 @@
 #include "system.h"
 #include "tinygl.h"
 
-#define LIGHTBIKE_MAX_LEN 8
+#define LIGHTBIKE_INC 1
+#define LIGHTBIKE_MOVE_PERIOD 200
+#define LIGHTBIKE_SNAKE_LEN 4
+#define LIGHTBIKE_DONT_DISPLAY 111
+
 
 typedef enum
 {
@@ -50,7 +54,7 @@ typedef struct
     tron_timer timer;
 } tron_lightbike_t;
 
-void tron_init(tron_lightbike_t*, direction_t, position_t, uint8_t);
+void tron_init(tron_lightbike_t*, direction_t, position_t);
 
 void tron_set_lightbike_dir(tron_lightbike_t*, direction_t);
 
@@ -58,6 +62,6 @@ void tron_move_lightbike(tron_lightbike_t*);
 
 which_bike_t tron_collision(tron_lightbike_t*, tron_lightbike_t*);
 
-uint8_t tron_update(tron_lightbike_t*);
+void tron_update(tron_lightbike_t*);
 
 #endif

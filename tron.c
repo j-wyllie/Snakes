@@ -7,11 +7,9 @@
 
 #include "tron.h"
 
-#define LIGHTBIKE_INC 1
-#define LIGHTBIKE_MOVE_PERIOD 200
 
 // initalises a bikes values
-void tron_init(tron_lightbike_t* player, direction_t dir, position_t pos, uint8_t snake_length)
+void tron_init(tron_lightbike_t* player, direction_t dir, position_t pos)
 {
     player->direction = dir;
     player->position = pos;
@@ -19,16 +17,10 @@ void tron_init(tron_lightbike_t* player, direction_t dir, position_t pos, uint8_
     player->snake[0].pos = pos;
     player->snake[0].value = 1;
     int i;
-    for (i = 1; i < 8; i++) {
-        if (i < snake_length) {
-            player->snake[i].pos.x = 111;
-            player->snake[i].pos.y = 111;
-            player->snake[i].value = 1;
-        } else {
-            player->snake[i].pos.x = 111;
-            player->snake[i].pos.y = 111;
-            player->snake[i].value = 111;
-        }
+    for (i = 1; i < LIGHTBIKE_SNAKE_LEN; i++) {
+        player->snake[i].pos.x = LIGHTBIKE_DONT_DISPLAY;
+        player->snake[i].pos.y = LIGHTBIKE_DONT_DISPLAY;
+        player->snake[i].value = 1;
     }
 
     player->timer.move_clock = 0;
@@ -97,12 +89,12 @@ which_bike_t tron_collision(tron_lightbike_t* control, tron_lightbike_t* listner
         return BOTH;
     }
     int i;
-    for (i = 1; i < 4 ;i++) {
+    for (i = 1; i < LIGHTBIKE_SNAKE_LEN ;i++) {
         if ( control->position.x == listner->snake[i].pos.x && control->position.y == listner->snake[i].pos.y){
             return CONTROLER;
         }
     }
-    for (i = 1; i < 4; i++){
+    for (i = 1; i < LIGHTBIKE_SNAKE_LEN; i++){
         if (listner->position.x == control->snake[i].pos.x && listner->position.y == control->snake[i].pos.y){
             return LISTNER;
         }
@@ -113,9 +105,8 @@ which_bike_t tron_collision(tron_lightbike_t* control, tron_lightbike_t* listner
 }
 
 // updates the lightbikes, checks if movements nessiary
-uint8_t tron_update(tron_lightbike_t* player)
+void tron_update(tron_lightbike_t* player)
 {
-
     player->timer.move_clock++;
     if (player->timer.move_clock >= player->timer.move_period) {
         player->timer.move_clock = 0;
@@ -123,6 +114,4 @@ uint8_t tron_update(tron_lightbike_t* player)
     }
 
     player->last_direction = player->direction;
-
-    return 0;
 }

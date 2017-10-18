@@ -18,17 +18,12 @@
 #include "tron.h"
 #include "player.h"
 
-#define TEXT_SPEED 10
-#define FLASH_RATE 5
+#define TEXT_SCROLL_SPEED 10
+#define TEXT_PACER_RATE 500
+#define LISTNER_FLASH_RATE 5
 
-/**********************************************************************
-TODO:
-*
-**********************************************************************/
 
 // game properties
-
-
 enum {DISPLAY_UPDATE_RATE = 700};
 enum {BUTTON_POLL_RATE = 200};
 enum {GAME_UPDATE_RATE = 100};
@@ -41,31 +36,27 @@ typedef enum {STATE_INIT, STATE_START,
 static state_t state = STATE_INIT;
 static tinygl_pixel_value_t display_buffer[TINYGL_WIDTH][TINYGL_HEIGHT] = {{0}};
 
-
-// Setters and Getters
+/*
+static void game_init(void);
+static void display_task(void);
+static void navswitch_task(void);
+static void game_task(void); */
 
 // set a pixel of the display buffer on
 static void display_set_pix(position_t pos, uint8_t value)
 {
-    display_buffer[pos.x][6 - pos.y] = value;
+    display_buffer[pos.x][(TINYGL_HEIGHT - 1) - pos.y] = value;
 }
-
-// game functions
-
-static void game_init(void);
-static void display_task(void);
-static void navswitch_task(void);
-static void game_task(void);
 
 // initalises game environment
 static void game_init(void)
 {
     // display_init
-    tinygl_init (DISPLAY_UPDATE_RATE);
-    tinygl_font_set (&font3x5_1);
-    tinygl_text_mode_set (TINYGL_TEXT_MODE_SCROLL);
-    tinygl_text_dir_set (TINYGL_TEXT_DIR_ROTATE);
-    tinygl_text_speed_set (TEXT_SPEED);
+    tinygl_init(DISPLAY_UPDATE_RATE);
+    tinygl_font_set(&font3x5_1);
+    tinygl_text_mode_set(TINYGL_TEXT_MODE_SCROLL);
+    tinygl_text_dir_set(TINYGL_TEXT_DIR_ROTATE);
+    tinygl_text_speed_set(TEXT_SCROLL_SPEED);
 
     // navswitch init
     navswitch_init();
@@ -80,16 +71,16 @@ static void game_init(void)
     players_init();
 }
 
-
 // displays whether you won or lost
 void display_over_message(who_lost)
 {
-    pacer_init(500);
-    // display instrution
+    pacer_init(TEXT_PACER_RATE);
+
+    // decide if won or lost
     char textWin[] = "WIN";
     char textLose[] = "LOST";
 
-    switch(who_lost) {
+    switch (who_lost) {
     case BOTH:
         tinygl_text(textLose);
         break;
@@ -100,13 +91,15 @@ void display_over_message(who_lost)
         tinygl_text(textLose);
         break;
     }
+
+    // display text
     while (1) {
         pacer_wait();
         tinygl_update();
         button_update();
         if (button_push_event_p(0)) {
             tinygl_clear();
-            return;
+            break;
         }
     }
 }
@@ -114,18 +107,19 @@ void display_over_message(who_lost)
 // prints welcom message and decides listener and control player
 static void choose_player(void)
 {
-    pacer_init(500);
+    pacer_init(TEXT_PACER_RATE);
+
     // display instrution
     char text[] = "WELCOME TO SNAKES";
     tinygl_text(text);
 
-    while(1) {
+    while (1) {
         pacer_wait();
-        tinygl_update ();
-        navswitch_update ();
+        tinygl_update();
+        navswitch_update();
 
         static char c = '\0';
-        if (ir_uart_read_ready_p()) {       // other player clicked first
+        if (ir_uart_read_ready_p()) {                        // other player clicked first
             c = ir_uart_getc();
             if (c == '1') {
                 set_control_player(2);
@@ -133,8 +127,8 @@ static void choose_player(void)
             }
         }
 
-        if (navswitch_push_event_p (NAVSWITCH_PUSH)) {
-            ir_uart_putc ('1');             // you clicked first
+        if (navswitch_push_event_p(NAVSWITCH_PUSH)) {      // you clicked first
+            ir_uart_putc ('1');
             set_control_player(1);
             break;
         }
@@ -163,25 +157,25 @@ static void display_task()
         tinygl_clear();
 
         // draw controlling lightbike
-        int i = 0;
-        while (get_control_player()->snake[i].value != 111) {
-            display_set_pix(get_control_player()->snake[i].pos, get_control_player()->snake[i].value);
-            i++;
+        tron_lightbike_t* p1 = get_control_player();
+        int i;
+        for (i = 0; i < LIGHTBIKE_SNAKE_LEN; i++) {
+            display_set_pix(p1->snake[i].pos, p1->snake[i].value);
         }
 
         // draw listening lightbike
+        tron_lightbike_t* p2 = get_listen_player();
         static uint8_t dimmer;
-        int j = 0;
         dimmer++;
-        if (dimmer > FLASH_RATE) {          // dimm listning bike
+        if (dimmer > LISTNER_FLASH_RATE) {
             dimmer = 0;
-            while (get_listen_player()->snake[j].value != 111) {
-                display_set_pix(get_listen_player()->snake[j].pos, get_listen_player()->snake[j].value);
-                j++;
+            for (i = 0; i < LIGHTBIKE_SNAKE_LEN; i++) {
+                display_set_pix(p2->snake[i].pos, p2->snake[i].value);
             }
         }
 
         // Update display
+        int j;
         for (j = 0; j < TINYGL_HEIGHT; j++)
             for (i = 0; i < TINYGL_WIDTH; i++) {
                 tinygl_point_t point = {i, j};
@@ -199,72 +193,57 @@ static void navswitch_task()
 
     if (navswitch_push_event_p (NAVSWITCH_NORTH)) {
         switch (state) {
-        case STATE_PLAYING:
-            if(get_control_player()->last_direction == DOWN) {
+            case STATE_PLAYING:
+                if(get_control_player()->last_direction == DOWN) {
+                    break;
+                }
+                tron_set_lightbike_dir(get_control_player(), UP);
+                ir_uart_putc('U');
                 break;
-            }
-            tron_set_lightbike_dir(get_control_player(), UP);
-            ir_uart_putc('U');
-            break;
-
-        default:
-            break;
         }
     }
 
     if (navswitch_push_event_p (NAVSWITCH_SOUTH)) {
         switch (state) {
-        case STATE_PLAYING:
-            if(get_control_player()->last_direction == UP) {
+            case STATE_PLAYING:
+                if(get_control_player()->last_direction == UP) {
+                    break;
+                }
+                tron_set_lightbike_dir(get_control_player(), DOWN);
+                ir_uart_putc('D');
                 break;
-            }
-            tron_set_lightbike_dir(get_control_player(), DOWN);
-            ir_uart_putc('D');
-            break;
-
-        default:
-            break;
         }
     }
 
     if (navswitch_push_event_p (NAVSWITCH_EAST)) {
         switch (state) {
-        case STATE_PLAYING:
-            if(get_control_player()->last_direction == LEFT) {
+            case STATE_PLAYING:
+                if(get_control_player()->last_direction == LEFT) {
+                    break;
+                }
+                tron_set_lightbike_dir(get_control_player(), RIGHT);
+                ir_uart_putc('R');
                 break;
-            }
-            tron_set_lightbike_dir(get_control_player(), RIGHT);
-            ir_uart_putc('R');
-            break;
-
-        default:
-            break;
         }
     }
 
     if (navswitch_push_event_p (NAVSWITCH_WEST)) {
         switch (state) {
-        case STATE_PLAYING:
-            if(get_control_player()->last_direction == RIGHT) {
+            case STATE_PLAYING:
+                if(get_control_player()->last_direction == RIGHT) {
+                    break;
+                }
+                tron_set_lightbike_dir(get_control_player(), LEFT);
+                ir_uart_putc('L');
                 break;
-            }
-            tron_set_lightbike_dir(get_control_player(), LEFT);
-            ir_uart_putc('L');
-            break;
-
-        default:
-            break;
         }
     }
 
 
     if (navswitch_push_event_p (NAVSWITCH_PUSH)) {
         switch (state) {
-        case STATE_PLAYING:
-            break;
-
-        default:
-            break;
+            case STATE_PLAYING:
+                break;
         }
     }
 }
@@ -272,30 +251,27 @@ static void navswitch_task()
 // receves and sets other players direction
 static void receive_task()
 {
-
-    if (ir_uart_read_ready_p ()) {
-        char respone = ir_uart_getc ();
+    if (ir_uart_read_ready_p()) {
+        char respone = ir_uart_getc();
 
         switch (respone) {
-        case 'L':
-            tron_set_lightbike_dir(get_listen_player(), LEFT);
-            break;
+            case 'L':
+                tron_set_lightbike_dir(get_listen_player(), LEFT);
+                break;
 
-        case 'R':
-            tron_set_lightbike_dir(get_listen_player(), RIGHT);
-            break;
+            case 'R':
+                tron_set_lightbike_dir(get_listen_player(), RIGHT);
+                break;
 
-        case 'U':
-            tron_set_lightbike_dir(get_listen_player(), UP);
-            break;
+            case 'U':
+                tron_set_lightbike_dir(get_listen_player(), UP);
+                break;
 
-        case 'D':
-            tron_set_lightbike_dir(get_listen_player(), DOWN);
-            break;
+            case 'D':
+                tron_set_lightbike_dir(get_listen_player(), DOWN);
+                break;
         }
-
     }
-
 }
 
 // updates game logic depending on game state
@@ -304,36 +280,36 @@ static void game_task()
     static which_bike_t who_lost;
 
     switch (state) {
-    case STATE_PLAYING:
-        if ((who_lost = tron_collision(get_control_player(), get_listen_player())) == NEITHER) {
-            tron_update(get_control_player());
-            tron_update(get_listen_player());
-        } else {
-            state = STATE_OVER;
-        }
-        break;
+        case STATE_PLAYING:
+            if ((who_lost = tron_collision(get_control_player(), get_listen_player())) == NEITHER) {
+                tron_update(get_control_player());
+                tron_update(get_listen_player());
+            } else {
+                state = STATE_OVER;
+            }
+            break;
 
-    case STATE_INIT:
-        game_init();
-        state = STATE_START;
-        break;
+        case STATE_INIT:
+            game_init();
+            state = STATE_START;
+            break;
 
-    case STATE_OVER:
-        display_over_message(who_lost);
-        state = STATE_INIT;
-        break;
+        case STATE_OVER:
+            display_over_message(who_lost);
+            state = STATE_INIT;
+            break;
 
-    case STATE_START:
-        choose_player();
-        state = STATE_PLAYING;
-        break;
+        case STATE_START:
+            choose_player();
+            state = STATE_PLAYING;
+            break;
     }
 }
 
 // main
 int main(void)
 {
-    system_init ();
+    system_init();
 
     task_t tasks[] = {
         {
@@ -358,6 +334,6 @@ int main(void)
         },
     };
 
-    task_schedule (tasks, ARRAY_SIZE (tasks));
+    task_schedule(tasks, ARRAY_SIZE (tasks));
     return 0;
 }
